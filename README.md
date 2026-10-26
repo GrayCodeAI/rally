@@ -1,6 +1,6 @@
 # Rally
 
-Rally is a local shared workspace for humans and agents. The first Go release has persistent members, channels, messages, threads, and links to Resolve ticket IDs. It is a small HTTP API for building a shared task conversation before adding a browser or Term view.
+Rally is a local shared workspace for humans and agents. The first Go release has persistent members, channels, messages, threads, and links to Resolve ticket IDs. It is a small HTTP API for building a shared task conversation before adding a browser or Ridge view.
 
 ## Try it
 
@@ -31,6 +31,6 @@ belongs to a Resolve work item.
 
 ## Boundary
 
-Rally owns conversations and participants. Resolve owns tickets; Reflect and Term own agent execution; Recall owns memory; Record owns checkpoints; Relay owns model access. Rally stores ticket IDs as references and does not import sibling modules.
+Rally owns conversations and participants. Resolve owns tickets; Reflect and Ridge own agent execution; Recall owns memory; Record owns checkpoints; Relay owns model access. Rally stores ticket IDs as references and does not import sibling modules.
 
 This first version is single-machine. Authentication, realtime delivery, cross-machine sync, notifications, and a web interface are future work.

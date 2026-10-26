@@ -42,6 +42,52 @@ type Store struct {
 	mu  sync.Mutex
 }
 
+// PostNamed posts a local workflow update, creating the named channel and
+// agent member on first use. Existing IDs remain stable across CLI invocations.
+func (s *Store) PostNamed(channelName, actorName, ticketID, body string) (Message, error) {
+	channelName, actorName = strings.TrimSpace(channelName), strings.TrimSpace(actorName)
+	if channelName == "" || actorName == "" {
+		return Message{}, errors.New("channel and actor names are required")
+	}
+	channels, err := s.Channels()
+	if err != nil {
+		return Message{}, err
+	}
+	var channelID string
+	for _, channel := range channels {
+		if channel.Name == channelName {
+			channelID = channel.ID
+			break
+		}
+	}
+	if channelID == "" {
+		channel, err := s.CreateChannel(channelName)
+		if err != nil {
+			return Message{}, err
+		}
+		channelID = channel.ID
+	}
+	members, err := s.Members()
+	if err != nil {
+		return Message{}, err
+	}
+	var actorID string
+	for _, member := range members {
+		if member.Name == actorName && member.Kind == "agent" {
+			actorID = member.ID
+			break
+		}
+	}
+	if actorID == "" {
+		member, err := s.CreateMember(actorName, "agent")
+		if err != nil {
+			return Message{}, err
+		}
+		actorID = member.ID
+	}
+	return s.Post(channelID, actorID, "", ticketID, body)
+}
+
 func (s *Store) CreateMember(name, kind string) (Member, error) {
 	name = strings.TrimSpace(name)
 	if name == "" || (kind != "human" && kind != "agent") {

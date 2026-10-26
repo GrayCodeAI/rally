@@ -7,9 +7,16 @@ Rally is a local shared workspace for humans and agents. The first Go release ha
 ```sh
 go build -o rally ./cmd/rally
 ./rally serve --data .data --listen 127.0.0.1:8765
+./rally note --data .data --channel engineering --actor Reflect \
+  --text 'Run started'
 ```
 
 The server accepts JSON:
+
+`rally note` writes a local message directly to the same store. It creates the
+named channel and agent member on first use, so Reflect can publish run updates
+without keeping an HTTP server running. Pass `--ticket <id>` when the note
+belongs to a Resolve work item.
 
 | Method | Path | Purpose |
 |---|---|---|

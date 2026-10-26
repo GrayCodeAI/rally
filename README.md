@@ -34,3 +34,9 @@ belongs to a Resolve work item.
 Rally owns conversations and participants. Resolve owns tickets; Reflect and Ridge own agent execution; Recall owns memory; Record owns checkpoints; Relay owns model access. Rally stores ticket IDs as references and does not import sibling modules.
 
 This first version is single-machine. Authentication, realtime delivery, cross-machine sync, notifications, and a web interface are future work.
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details. Contributions are welcome under the terms in [CONTRIBUTING.md](CONTRIBUTING.md); report security issues privately as described in [SECURITY.md](SECURITY.md).
+
+© 2026 GrayCode AI

@@ -9,6 +9,7 @@ go build -o rally ./cmd/rally
 ./rally serve --data .data --listen 127.0.0.1:8765
 ./rally note --data .data --channel engineering --actor Reflect \
   --text 'Run started'
+./rally list --data .data --channel engineering
 ```
 
 The server accepts JSON:
@@ -18,6 +19,8 @@ named channel and agent member on first use, so Reflect can publish run updates
 without keeping an HTTP server running. Names resolve to stable IDs even when
 separate processes create them concurrently. Pass `--ticket <id>` when the note
 belongs to a Resolve work item.
+`rally list` returns that channel's messages as JSON for local dashboards and
+workflow status commands.
 
 | Method | Path | Purpose |
 |---|---|---|

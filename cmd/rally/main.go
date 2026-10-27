@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/GrayCodeAI/rally/workspace"
 )
@@ -21,8 +22,8 @@ func main() {
 }
 
 func run(args []string) error {
-	if len(args) == 0 || (args[0] != "serve" && args[0] != "note") {
-		return errors.New("use rally serve or rally note")
+	if len(args) == 0 || (args[0] != "serve" && args[0] != "note" && args[0] != "list") {
+		return errors.New("use rally serve, rally note, or rally list")
 	}
 	fs := flag.NewFlagSet(args[0], flag.ContinueOnError)
 	data := fs.String("data", defaultDataDir(), "workspace data directory")
@@ -40,6 +41,30 @@ func run(args []string) error {
 			return err
 		}
 		return json.NewEncoder(os.Stdout).Encode(message)
+	}
+	if args[0] == "list" {
+		store := &workspace.Store{Dir: *data}
+		channels, err := store.Channels()
+		if err != nil {
+			return err
+		}
+		messages := make([]workspace.Message, 0)
+		for _, entry := range channels {
+			if entry.Name == *channel || entry.ID == *channel {
+				channelMessages, err := store.Messages(entry.ID)
+				if err != nil {
+					return err
+				}
+				messages = append(messages, channelMessages...)
+			}
+		}
+		sort.Slice(messages, func(i, j int) bool {
+			if messages[i].CreatedAt.Equal(messages[j].CreatedAt) {
+				return messages[i].ID < messages[j].ID
+			}
+			return messages[i].CreatedAt.Before(messages[j].CreatedAt)
+		})
+		return json.NewEncoder(os.Stdout).Encode(messages)
 	}
 	host, _, err := net.SplitHostPort(*listen)
 	if err != nil {

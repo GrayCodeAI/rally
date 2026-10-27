@@ -2,6 +2,7 @@ package workspace
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -93,12 +94,25 @@ func (s *Store) CreateMember(name, kind string) (Member, error) {
 	if name == "" || (kind != "human" && kind != "agent") {
 		return Member{}, errors.New("name and kind (human or agent) are required")
 	}
-	id, err := randomID()
+	members, err := s.Members()
 	if err != nil {
 		return Member{}, err
 	}
+	for _, member := range members {
+		if member.Name == name && member.Kind == kind {
+			return member, nil
+		}
+	}
+	id := namedID("member:"+kind, name)
 	m := Member{ID: id, Name: name, Kind: kind, CreatedAt: time.Now().UTC()}
-	return m, s.write("members", m.ID, m)
+	if err := s.write("members", m.ID, m); errors.Is(err, os.ErrExist) {
+		var existing Member
+		_, err = s.read("members", id, &existing)
+		return existing, err
+	} else if err != nil {
+		return Member{}, err
+	}
+	return m, nil
 }
 
 func (s *Store) CreateChannel(name string) (Channel, error) {
@@ -106,12 +120,25 @@ func (s *Store) CreateChannel(name string) (Channel, error) {
 	if name == "" {
 		return Channel{}, errors.New("channel name is required")
 	}
-	id, err := randomID()
+	channels, err := s.Channels()
 	if err != nil {
 		return Channel{}, err
 	}
+	for _, channel := range channels {
+		if channel.Name == name {
+			return channel, nil
+		}
+	}
+	id := namedID("channel", name)
 	c := Channel{ID: id, Name: name, CreatedAt: time.Now().UTC()}
-	return c, s.write("channels", c.ID, c)
+	if err := s.write("channels", c.ID, c); errors.Is(err, os.ErrExist) {
+		var existing Channel
+		_, err = s.read("channels", id, &existing)
+		return existing, err
+	} else if err != nil {
+		return Channel{}, err
+	}
+	return c, nil
 }
 
 func (s *Store) Post(channelID, actorID, threadID, ticketID, body string) (Message, error) {
@@ -208,20 +235,28 @@ func (s *Store) write(kind, id string, value any) error {
 		return err
 	}
 	name := filepath.Join(dir, id+".json")
-	f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	f, err := os.CreateTemp(dir, ".pending-*")
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer os.Remove(f.Name())
 	if _, err := f.Write(append(data, '\n')); err != nil {
-		os.Remove(name)
+		f.Close()
 		return err
 	}
 	if err := f.Sync(); err != nil {
-		os.Remove(name)
+		f.Close()
 		return err
 	}
-	return nil
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return os.Link(f.Name(), name)
+}
+
+func namedID(kind, name string) string {
+	sum := sha256.Sum256([]byte(kind + "\x00" + name))
+	return hex.EncodeToString(sum[:16])
 }
 
 func (s *Store) read(kind, id string, target any) (bool, error) {

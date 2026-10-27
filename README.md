@@ -15,7 +15,8 @@ The server accepts JSON:
 
 `rally note` writes a local message directly to the same store. It creates the
 named channel and agent member on first use, so Reflect can publish run updates
-without keeping an HTTP server running. Pass `--ticket <id>` when the note
+without keeping an HTTP server running. Names resolve to stable IDs even when
+separate processes create them concurrently. Pass `--ticket <id>` when the note
 belongs to a Resolve work item.
 
 | Method | Path | Purpose |
